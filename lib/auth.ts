@@ -1,45 +1,65 @@
-import { SignJWT, importPKCS8 } from "jose";
+import { SignJWT, importPKCS8, importSPKI, jwtVerify, JWTPayload } from "jose";
 
-/**
- * Helper function: Sometimes when pasting RSA keys into .env, the required
- * PEM headers get stripped. This ensures 'jose' can read the key properly.
- */
-const formatPrivateKey = (key: string) => {
-  if (key.includes("BEGIN PRIVATE KEY")) return key;
+const formatPrivateKey = (key: string): string => {
+  // If it already has PEM headers, use as-is
+  if (key.includes("-----BEGIN")) return key;
+  // Otherwise wrap the raw base64 body
   return `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
 };
 
-/**
- * Generates a highly secure RS256 Access Token.
- * * @param userId The database ID of the user
- * @param role The RBAC role (e.g., 'ADMIN', 'OPERATOR')
- * @param email The user's email
- * @returns A signed JWT string
- */
+const formatPublicKey = (key: string): string => {
+  if (key.includes("-----BEGIN")) return key;
+  return `-----BEGIN PUBLIC KEY-----\n${key}\n-----END PUBLIC KEY-----`;
+};
+
 export async function generateAccessToken(
   userId: string,
   role: string,
   email: string,
 ) {
-  // 1. Grab the private key from your .env file
   const secretKey = process.env.GUARDIAN_JWT_PRIVATE_KEY;
-
   if (!secretKey) {
     throw new Error(
       "Critical Security Error: GUARDIAN_JWT_PRIVATE_KEY is missing.",
     );
   }
 
-  // 2. Format it and convert it into a cryptographic key object
-  const formattedKey = formatPrivateKey(secretKey);
-  const privateKey = await importPKCS8(formattedKey, "RS256");
+  const privateKey = await importPKCS8(formatPrivateKey(secretKey), "RS256");
 
-  // 3. Mint the token using the 'jose' library
-  const jwt = await new SignJWT({ userId, role, email })
+  return new SignJWT({ userId, role, email })
     .setProtectedHeader({ alg: "RS256" })
     .setIssuedAt()
-    .setExpirationTime("15m") // Strictly enforces the 15-minute JIT window
+    .setExpirationTime("15m")
     .sign(privateKey);
+}
 
-  return jwt;
+// ADD THIS — you'll need it in every protected route
+export async function verifyAccessToken(token: string) {
+  const publicKey = process.env.GUARDIAN_JWT_PUBLIC_KEY;
+  if (!publicKey) {
+    throw new Error(
+      "Critical Security Error: GUARDIAN_JWT_PUBLIC_KEY is missing.",
+    );
+  }
+
+  const key = await importSPKI(formatPublicKey(publicKey), "RS256");
+  const { payload } = await jwtVerify(token, key);
+  return payload; // contains { userId, role, email }
+}
+
+export async function generateRefreshToken(userId: string) {
+  const secretKey = process.env.GUARDIAN_JWT_PRIVATE_KEY;
+  if (!secretKey) {
+    throw new Error(
+      "Critical Security Error: GUARDIAN_JWT_PRIVATE_KEY is missing.",
+    );
+  }
+
+  const privateKey = await importPKCS8(formatPrivateKey(secretKey), "RS256");
+
+  return new SignJWT({ userId, type: "refresh" })
+    .setProtectedHeader({ alg: "RS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(privateKey);
 }

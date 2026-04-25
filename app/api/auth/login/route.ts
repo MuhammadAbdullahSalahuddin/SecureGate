@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-// We will import bcrypt and jose here later
+import bcrypt from "bcrypt";
+import { generateAccessToken, generateRefreshToken } from "@/lib/auth";
+import { pool } from "@/lib/db"; // we'll create this next
 
-// In Next.js, the function name dictates the HTTP method (POST, GET, etc.)
 export async function POST(request: Request) {
   try {
-    // 1. Parse the incoming JSON from the frontend
     const body = await request.json();
     const { email, password } = body;
 
-    // 2. Validate input exists
     if (!email || !password) {
       return NextResponse.json(
         { message: "Invalid credentials" },
@@ -16,18 +15,50 @@ export async function POST(request: Request) {
       );
     }
 
-    // [TODO]: Connect to Database
-    // [TODO]: Verify bcrypt hash
-    // [TODO]: Generate RS256 JWT via jose
+    const result = await pool.query(
+      "SELECT id, email, password_hash, role FROM users WHERE email = $1",
+      [email],
+    );
+    const user = result.rows[0];
 
-    // 3. Return success for now so we can test the connection
-    return NextResponse.json({
-      message: "Endpoint reached successfully",
-      email,
+    if (!user) {
+      return NextResponse.json(
+        { message: "Invalid credentials" },
+        { status: 401 },
+      );
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    if (!passwordMatch) {
+      return NextResponse.json(
+        { message: "Invalid credentials" },
+        { status: 401 },
+      );
+    }
+
+    // Sign BOTH tokens
+    const accessToken = await generateAccessToken(
+      user.id.toString(),
+      user.role,
+      user.email,
+    );
+    const refreshToken = await generateRefreshToken(user.id.toString());
+
+    // Build the response
+    const response = NextResponse.json({ accessToken });
+
+    // Attach refresh token as httpOnly cookie — JavaScript cannot read this
+    response.cookies.set("refreshToken", refreshToken, {
+      httpOnly: true, // invisible to JavaScript — XSS protection
+      secure: process.env.NODE_ENV === "production", // HTTPS only in prod
+      sameSite: "strict", // blocks cross-site request forgery
+      maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
+      path: "/",
     });
+
+    return response;
   } catch (error) {
     console.error("Login Error:", error);
-    // Strict Error Handling: Never leak database state on failure
     return NextResponse.json(
       { message: "Invalid credentials" },
       { status: 401 },
