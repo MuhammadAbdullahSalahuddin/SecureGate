@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateAccessToken, verifyAccessToken } from "@/lib/auth";
 import { pool } from "@/lib/db";
+import { JSON_CONTENT_TYPE_HEADER } from "next/dist/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {

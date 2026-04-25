@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool } from "@/node_modules/@types/pg";
 
 export const pool = new Pool({
   host: process.env.GUARDIAN_DB_HOST,
