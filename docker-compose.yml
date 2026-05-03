@@ -5,28 +5,19 @@ networks:
 
 
 services:
-  api:
-    build: ./backend
-    ports: ["4000:4000"]
+  app:
+    build: .
+    ports: ["3000:3000"]
     env_file: .env
     depends_on: [postgres, mongo, redis]
     networks: [guardian-net]
-
-  ws-server:
-    build: ./backend
-    command: ["node", "dist/main.ws.js"]
-    ports: ["3001:3001"]
-    env_file: .env
-    depends_on: [redis, mongo]
-    networks: [guardian-net]
-
-  vault-service:
-    build: ./vault-service
-    env_file: .env
-    networks: [guardian-net]
+    volumes:
+      - .:/app
+      - /app/node_modules
 
   postgres:
     image: postgres:16
+    restart: unless-stopped
     container_name: securegate_postgres
     environment:
       POSTGRES_USER: admin
@@ -41,19 +32,25 @@ services:
 
   mongo:
     image: mongo:latest
+    restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: admin
+      MONGO_INITDB_DATABASE: securegate_audit
     volumes:
       - mongodata:/data/db
     networks: [guardian-net]
 
   redis:
     image: redis:7
+    restart: unless-stopped
     container_name: securegate_redis
     command: redis-server --requirepass admin
     networks: [guardian-net]
+    volumes:
+      - redisdata:/data
 
 volumes:
   pgdata:
   mongodata:
+  redisdata:

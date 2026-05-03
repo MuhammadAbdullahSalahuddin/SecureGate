@@ -1,13 +1,24 @@
-.PHONY: up down logs seed
 
 up:
-	docker compose up --build -d
+	docker compose up -d
 
 down:
-	docker compose down -v
+	docker compose down
 
 logs:
 	docker compose logs -f
 
 seed:
-	cat ./docker/postgres/seed.sql | docker compose exec -T postgres psql -U admin -d securegate
+	docker compose exec postgres psql -U admin -d securegate \ -f /docker-entrypoint-initdb.d/seed.sql
+
+seed-vault:
+	docker compose exec app npx tsx docker/seed-vault.ts
+
+shell-pg:
+	docker compose exec postgres psql -U admin -d securegate
+
+shell-redis:
+	docker compose exec redis redis-cli -a $$admin
+
+shell-mongo:
+	docker compose exec mongo mongosh -u admin -p $$admin
