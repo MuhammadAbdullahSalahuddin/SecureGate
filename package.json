@@ -1,19 +1,40 @@
 {
   "name": "securegate",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tail -f /dev/null"
+    "dev": "tsx server.ts",
+    "build": "next build",
+    "start": "tsx server.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "pg": "^8.20.0"
+    "next": "14.2.3",
+    "react": "^18",
+    "react-dom": "^18",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.5",
+    "bcrypt": "^5.1.1",
+    "jose": "^5.2.4",
+    "mongoose": "^8.3.1",
+    "zod": "^3.23.8",
+    "zustand": "^4.5.2",
+    "react-hook-form": "^7.51.3",
+    "ssh2": "^1.15.0",
+    "node-pty": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/bcrypt": "^5.0.2",
+    "@types/pg": "^8.11.5",
+    "@types/ssh2": "^1.11.19",
+    "tsx": "^4.7.2",
+    "tailwindcss": "^3.4.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38"
   }
 }
