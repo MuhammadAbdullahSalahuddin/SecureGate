@@ -17,7 +17,7 @@ shell-pg:
 	docker compose exec postgres psql -U admin -d securegate
 
 shell-redis:
-	docker compose exec redis redis-cli -a $$admin
+	docker compose exec redis redis-cli -a admin
 
 shell-mongo:
-	docker compose exec mongo mongosh -u admin -p $$admin
+	docker compose exec mongo mongosh -u admin -p admin
