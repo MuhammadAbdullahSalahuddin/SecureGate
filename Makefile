@@ -9,8 +9,7 @@ logs:
 	docker compose logs -f
 
 seed:
-	docker compose exec postgres psql -U admin -d securegate \ -f /docker-entrypoint-initdb.d/seed.sql
-
+	docker compose exec postgres psql -U admin -d securegate -f /tmp/seed.sql
 seed-vault:
 	docker compose exec app npx tsx docker/seed-vault.ts
 
