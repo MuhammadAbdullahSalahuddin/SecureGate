@@ -13,7 +13,7 @@ INSERT INTO user_roles (user_id, role_id)
 
 INSERT INTO user_roles (user_id, role_id)
 	SELECT u.id, r.id FROM users u, roles r
-	WHERE u.email = 'auditor@secure.local' AND r.name = 'AUDITOR';
+	WHERE u.email = 'auditor@securegate.local' AND r.name = 'AUDITOR';
 
 
 INSERT INTO target_assets (id, name, hostname, port, db_type) VALUES 
