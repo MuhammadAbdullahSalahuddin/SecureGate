@@ -1,5 +1,5 @@
 FROM node:20-alpine
-RUN apk add --no-cache python3 make g++
+RUN apk add --no-cache python3 make g++ linux-headers
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
