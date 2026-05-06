@@ -29,7 +29,11 @@ export async function POST(request: NextRequest) {
 
     // 4. Look up the user — confirms account still exists and gets current role
     const result = await pool.query(
-      "SELECT id, email, role FROM users WHERE id = $1",
+      `SELECT u.id, u.email, r.name as role
+   FROM users u
+   INNER JOIN user_roles ur ON ur.user_id = u.id
+   INNER JOIN roles r ON r.id = ur.role_id
+   WHERE u.id = $1`,
       [userId],
     );
     const user = result.rows[0];

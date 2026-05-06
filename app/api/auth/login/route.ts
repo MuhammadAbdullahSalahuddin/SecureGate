@@ -16,7 +16,11 @@ export async function POST(request: Request) {
     }
 
     const result = await pool.query(
-      "SELECT id, email, password_hash, role FROM users WHERE email = $1",
+      `SELECT u.id, u.email, u.password_hash, r.name as role
+       FROM users u
+       INNER JOIN user_roles ur ON ur.user_id = u.id
+       INNER JOIN roles r ON r.id = ur.role_id
+       WHERE u.email = $1`,
       [email],
     );
     const user = result.rows[0];
