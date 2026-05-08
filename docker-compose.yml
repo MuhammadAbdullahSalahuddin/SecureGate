@@ -38,6 +38,7 @@ services:
       MONGO_INITDB_DATABASE: securegate_audit
     volumes:
       - mongodata:/data/db
+      - ./docker/mongo-init:/docker-entrypoint-initdb.d
     networks: [guardian-net]
 
   redis:
