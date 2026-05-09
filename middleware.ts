@@ -1,50 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify, importSPKI } from 'jose'
 
-const PUBLIC_ROUTES = ['/login', '/api/auth/login', '/api/auth/refresh']
-
 const formatPublicKey = (key: string): string => {
   if (key.includes('-----BEGIN')) return key
   return `-----BEGIN PUBLIC KEY-----\n${key}\n-----END PUBLIC KEY-----`
 }
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-
-  // Allow public routes through
-  if (PUBLIC_ROUTES.some((r) => pathname.startsWith(r))) {
-    return NextResponse.next()
-  }
-
-  // For API routes, the route handler does its own requireRole check
-  // We only guard page routes here
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next()
-  }
-
-  // Check for the refreshToken cookie — if it exists, the user has a session
-  // We don't verify it fully here (that's the API's job), just check presence
-  // For a stronger check, verify the accessToken stored in a non-httpOnly cookie
+  // 1. Check for the refreshToken cookie
+  // As per Security Rule 3, this httpOnly cookie proves the user has an active session
   const refreshToken = request.cookies.get('refreshToken')?.value
 
   if (!refreshToken) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Optionally verify the refresh token signature at the edge
+  // 2. Verify the refresh token signature at the edge
   try {
     const publicKeyStr = process.env.GUARDIAN_JWT_PUBLIC_KEY ?? ''
-    const key = await importSPKI(formatPublicKey(publicKeyStr), 'RS256')
-    await jwtVerify(refreshToken, key)
+    const formattedKey = formatPublicKey(publicKeyStr)
+    
+    // Import the RS256 public key for edge runtime
+    const publicKey = await importSPKI(formattedKey, 'RS256')
+
+    // Verify the token. If it was tampered with, this throws an error.
+    await jwtVerify(refreshToken, publicKey)
+
     return NextResponse.next()
-  } catch {
-    // Token expired or invalid — redirect to login
+  } catch (error) {
+    // Token is invalid or expired
+    console.error('Middleware JWT Verification Failed:', error)
+    
+    // Clear the broken cookie and force a re-login
     const response = NextResponse.redirect(new URL('/login', request.url))
     response.cookies.delete('refreshToken')
     return response
   }
 }
 
+// 3. The Matcher Configuration
+// This is critical! It prevents the middleware from blocking Next.js internal files
+// and API routes (which have their own RBAC guards).
 export const config = {
-  matcher: ['/dashboard/:path*', '/terminal/:path*', '/replay/:path*'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - login (the login page itself)
+     */
+    '/((?!api|_next/static|_next/image|__nextjs|favicon.ico|login).*)',
+  ],
 }

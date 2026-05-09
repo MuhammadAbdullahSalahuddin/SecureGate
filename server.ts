@@ -279,6 +279,12 @@ const startServer = async () => {
     });
   });
 
+  httpServer.on('upgrade', (req, socket, head) => {
+    if (req.url?.startsWith('/_next') || req.url?.startsWith('/__nextjs')) {
+      return; 
+    }
+  });
+
   httpServer
     .once("error", (err) => {
       console.error(err);
