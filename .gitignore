@@ -44,5 +44,9 @@ public.pem
 AGENTS.md
 CLAUDE.md
 eslint.config.mjs
+<<<<<<< Updated upstream
 tsconfig.json
+=======
+next.config.ts
+>>>>>>> Stashed changes
 postcss.config.mjs
