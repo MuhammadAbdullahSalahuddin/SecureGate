@@ -16,7 +16,7 @@ const dev = process.env.NODE_ENV !== "production";
 const hostname = "0.0.0.0"; // bind to all interfaces so Laptop 3 can reach us
 const port = 3000;
 
-const app = next({ dev, hostname, port });
+const app = next({ dev, hostname, port, customServer: true });
 const handle = app.getRequestHandler();
 
 // ─── TTL Poller ───────────────────────────────────────────────────────────────
@@ -277,12 +277,6 @@ const startServer = async () => {
       console.error("[Gateway] Unhandled error in handleConnection:", err);
       socket.disconnect(true);
     });
-  });
-
-  httpServer.on('upgrade', (req, socket, head) => {
-    if (req.url?.startsWith('/_next') || req.url?.startsWith('/__nextjs')) {
-      return; 
-    }
   });
 
   httpServer
