@@ -4,14 +4,14 @@ import { getAuditDb } from "@/lib/mongo";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   // Only ADMIN and AUDITOR can replay sessions
   // OPERATOR cannot replay — they can only see their session history (no keystroke detail)
   const auth = await requireRole(request, ["ADMIN", "AUDITOR"]);
   if (auth instanceof NextResponse) return auth;
 
-  const sessionId = params.id;
+  const { id: sessionId} = await params;
   const db = await getAuditDb();
 
   // Fetch ALL events for this session, sorted by seqNum ASC.

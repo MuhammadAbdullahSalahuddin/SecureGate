@@ -11,7 +11,7 @@ const pool = new Pool({
 async function seedVault() {
   // These are the SSH credentials for pamuser on Laptop 1
   const creds = {
-    username: 'sys_admin',
+    username: 'pamuser',
     password: '1234Admin'
   }
   const blob = encryptCredential(creds)
