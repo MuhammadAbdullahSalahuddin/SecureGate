@@ -44,6 +44,5 @@ public.pem
 AGENTS.md
 CLAUDE.md
 eslint.config.mjs
-next.config.ts
 tsconfig.json
 postcss.config.mjs
