@@ -8,6 +8,7 @@ const formatPublicKey = (key: string) =>
 
 export async function middleware(request: NextRequest) {
   const refreshToken = request.cookies.get("refreshToken")?.value;
+  console.log("[Middleware] path:", request.nextUrl.pathname, "hasToken:", !!refreshToken)
   if (!refreshToken)
     return NextResponse.redirect(new URL("/login", request.url));
 
